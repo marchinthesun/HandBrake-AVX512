@@ -1420,6 +1420,10 @@ def createCLI( cross = None ):
     grp.add_argument( '--enable-numa', dest="enable_numa", default=IfHost(True, '*-*-linux*', none=False).value, action='store_true', help=(( 'enable %s' %h ) if h != argparse.SUPPRESS else h) )
     grp.add_argument( '--disable-numa', dest="enable_numa", action='store_false', help=(( 'disable %s' %h ) if h != argparse.SUPPRESS else h) )
 
+    h = IfHost( 'AVX-512 native code generation for video filters (Zen4/Zen5, x86_64)', 'x86_64-*', 'amd64-*', none=argparse.SUPPRESS ).value
+    grp.add_argument( '--enable-avx512', dest="enable_avx512", default=False, action='store_true', help=(( 'enable %s' %h ) if h != argparse.SUPPRESS else h) )
+    grp.add_argument( '--disable-avx512', dest="enable_avx512", action='store_false', help=(( 'disable %s' %h ) if h != argparse.SUPPRESS else h) )
+
     h = IfHost( 'FDK AAC audio encoder', '*-*-*', none=argparse.SUPPRESS ).value
     grp.add_argument( '--enable-fdk-aac', dest="enable_fdk_aac", default=False, action='store_true', help=(( 'enable %s' %h ) if h != argparse.SUPPRESS else h) )
     grp.add_argument( '--disable-fdk-aac', dest="enable_fdk_aac", action='store_false', help=(( 'disable %s' %h ) if h != argparse.SUPPRESS else h) )
@@ -2109,6 +2113,7 @@ int main()
     doc.add( 'FEATURE.amfdec',        int( options.enable_amfdec ))
     doc.add( 'FEATURE.x265',          int( options.enable_x265 ))
     doc.add( 'FEATURE.numa',          int( options.enable_numa ))
+    doc.add( 'FEATURE.avx512',        int( getattr(options, 'enable_avx512', False) ))
     doc.add( 'FEATURE.libdovi',       int( options.enable_libdovi ))
 
     if build_tuple.match( '*-*-darwin*' ) and options.cross is None:
