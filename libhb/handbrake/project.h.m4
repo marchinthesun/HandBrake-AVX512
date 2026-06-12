@@ -53,6 +53,7 @@ dnl
 <<#>>define HB_PROJECT_FEATURE_AMFDEC            __FEATURE_amfdec
 <<#>>define HB_PROJECT_FEATURE_X265              __FEATURE_x265
 <<#>>define HB_PROJECT_FEATURE_NUMA              __FEATURE_numa
+<<#>>define HB_PROJECT_FEATURE_AVX512            __FEATURE_avx512
 <<#>>define HB_PROJECT_FEATURE_LIBDOVI           __FEATURE_libdovi
 
 <<#>>define HB_PROJECT_SECURITY_HARDEN           __SECURITY_harden
