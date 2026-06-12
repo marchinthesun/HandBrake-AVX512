@@ -264,6 +264,24 @@ int encsvtInit(hb_work_object_t *w, hb_job_t *job)
         }
     }
 
+    /*
+     * Multi-CCD / NUMA-aware threading for many-core hosts. Pin the
+     * encoder's workers and let SVT-AV1 scale across every logical
+     * processor (lp = 0 -> use all), so large Threadripper / EPYC parts
+     * can drive 128+ threads without remote-memory stalls. Defaults
+     * only; overridable through the encoder options string below.
+     */
+    {
+        hb_cpu_topology_t topo = hb_get_cpu_topology();
+        if (topo.numa_nodes > 1 || topo.ccd_count > 1)
+        {
+            svt_av1_enc_parse_parameter(param, "pin", "1");
+            svt_av1_enc_parse_parameter(param, "lp",  "0");
+            hb_log("encsvtav1: NUMA-aware threading enabled (%d NUMA node(s), %d CCD(s), %d threads)",
+                   topo.numa_nodes, topo.ccd_count, hb_get_cpu_count());
+        }
+    }
+
     hb_dict_t *encoder_options = NULL;
     if (job->encoder_options != NULL && *job->encoder_options)
     {
