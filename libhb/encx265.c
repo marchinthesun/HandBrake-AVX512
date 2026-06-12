@@ -293,6 +293,29 @@ int encx265Init(hb_work_object_t *w, hb_job_t *job)
     /* Bit depth */
     pv->bit_depth = hb_get_bit_depth(job->output_pix_fmt);
 
+    /*
+     * Multi-CCD / NUMA-aware threading defaults for many-core hosts
+     * (Threadripper 7000/9000, 3990X, EPYC class). Spread x265's worker
+     * pools across all NUMA nodes and enable distributed mode/motion
+     * analysis so that 128+ threads stay productive instead of stalling
+     * on a single pool. These are defaults only: any value the user
+     * provides in the encoder options string below overrides them.
+     */
+    {
+        hb_cpu_topology_t topo = hb_get_cpu_topology();
+        if (topo.numa_nodes > 1 || topo.ccd_count > 1)
+        {
+            param_parse(pv, param, "pools", "*");
+            if (hb_get_cpu_count() >= 32)
+            {
+                param_parse(pv, param, "pmode", "1");
+                param_parse(pv, param, "pme",   "1");
+            }
+            hb_log("encx265: NUMA-aware pools enabled (%d NUMA node(s), %d CCD(s), %d threads)",
+                   topo.numa_nodes, topo.ccd_count, hb_get_cpu_count());
+        }
+    }
+
     /* iterate through x265_opts and parse the options */
     hb_dict_t *x265_opts;
     int override_mastering = 0, override_coll = 0, override_chroma_location = 0;
