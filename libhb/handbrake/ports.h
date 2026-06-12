@@ -94,6 +94,41 @@ const char* hb_get_cpu_name(void);
 const char* hb_get_cpu_platform_name(void);
 
 /************************************************************************
+ * CPU topology (NUMA nodes / CCD - L3 clusters) awareness
+ *
+ * Used to keep heavy encoding/filter work local to a single chiplet
+ * (CCD) and a single NUMA node, minimising expensive cross-chiplet
+ * traffic over AMD Infinity Fabric and remote-memory latency on
+ * many-core parts (Ryzen 7950X, Threadripper 7000/9000, 3990X, 7995WX).
+ ***********************************************************************/
+typedef struct hb_cpu_topology_s
+{
+    int logical_cpus;    // total online logical processors
+    int physical_cores;  // physical cores (0 if unknown)
+    int numa_nodes;      // number of NUMA nodes (>= 1)
+    int ccd_count;       // number of CCD / L3 clusters (>= 1)
+    int cpus_per_ccd;    // logical cpus sharing a single L3 (CCD width)
+} hb_cpu_topology_t;
+
+/* Returns the detected CPU topology. The result is cached after the
+ * first call. On platforms where detection is unavailable, sensible
+ * single-node/single-CCD defaults are returned. */
+hb_cpu_topology_t hb_get_cpu_topology(void);
+
+/* Globally enable/disable CCD/NUMA-aware worker thread pinning.
+ * Enabled by default on multi-CCD / multi-NUMA hosts. */
+void hb_cpu_set_affinity_enabled(int enabled);
+int  hb_cpu_get_affinity_enabled(void);
+
+/* Pin the *calling* thread to the CPUs that belong to logical
+ * affinity domain `domain` out of `domain_count` domains, where a
+ * domain maps onto a CCD (preferred) or NUMA node. This keeps a group
+ * of cooperating threads resident on the same chiplet/node.
+ * `domain` is taken modulo the real number of domains. Safe no-op when
+ * pinning is disabled, the host is single-domain, or unsupported. */
+void hb_cpu_pin_thread_to_domain(int domain, int domain_count);
+
+/************************************************************************
  * Utils
  ***********************************************************************/
 // provide time in ms
