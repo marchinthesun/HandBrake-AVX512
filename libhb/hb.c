@@ -453,6 +453,16 @@ void hb_scan( hb_handle_t * h, hb_list_t * paths, int title_index,
         hb_log(" - %s", cpu_type);
     }
     hb_log(" - logical processor count: %d", hb_get_cpu_count());
+    {
+        hb_cpu_topology_t topo = hb_get_cpu_topology();
+        hb_log(" - topology: %d NUMA node(s), %d CCD/L3 cluster(s), %d cpus/CCD",
+               topo.numa_nodes, topo.ccd_count, topo.cpus_per_ccd);
+        if (topo.ccd_count > 1 || topo.numa_nodes > 1)
+        {
+            hb_log(" - CCD/NUMA-aware thread affinity: %s",
+                   hb_cpu_get_affinity_enabled() ? "enabled" : "disabled");
+        }
+    }
 
 #if HB_PROJECT_FEATURE_QSV
     if (!hb_is_hardware_disabled())
