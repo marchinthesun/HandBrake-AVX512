@@ -176,8 +176,29 @@ static void
 taskset_thread_f( void *thread_args_v )
 {
     taskset_thread_arg_t *thread_args = thread_args_v;
+    taskset_t *ts = thread_args->taskset;
     int segment = thread_args->segment;
-    taskset_thread_t *thread = taskset_thread( thread_args->taskset, segment );
+    taskset_thread_t *thread = taskset_thread( ts, segment );
+
+    /*
+     * Multi-CCD / NUMA-aware affinity: keep cooperating segments of one
+     * heavy task resident on the same chiplet (CCD) / NUMA node, so that
+     * neighbouring stripes which share filter border data stay local and
+     * we avoid bouncing them across the Infinity Fabric. We use a block
+     * partition (contiguous segments share a domain) rather than a
+     * round-robin so the overlap regions stay on-die.
+     */
+    if ( ts->thread_count > 1 )
+    {
+        hb_cpu_topology_t topo = hb_get_cpu_topology();
+        int domains = topo.ccd_count  > 1 ? topo.ccd_count  :
+                     (topo.numa_nodes > 1 ? topo.numa_nodes : 1);
+        if ( domains > 1 )
+        {
+            int domain = ( segment * domains ) / ts->thread_count;
+            hb_cpu_pin_thread_to_domain( domain, ts->thread_count );
+        }
+    }
 
     while (1)
     {
