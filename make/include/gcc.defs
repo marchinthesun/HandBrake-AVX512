@@ -94,6 +94,14 @@ GCC.args.extra         =
 ifeq ($(HOST.machine),$(filter $(HOST.machine),i686 x86_64))
     GCC.args.extra    += -mfpmath=sse -msse2
 endif
+# AVX-512 native pipeline: let the compiler emit AVX-512 for the video
+# processing filters (deinterlace, colour, scaling) on Zen4/Zen5 parts
+# (Ryzen 7950X, Threadripper 7000/9000). Opt-in via --enable-avx512.
+ifeq (1,$(FEATURE.avx512))
+ifeq ($(HOST.machine),$(filter $(HOST.machine),i686 x86_64))
+    GCC.args.extra    += -mavx512f -mavx512vl -mavx512dq
+endif
+endif
 GCC.args.extra        += $(CPPFLAGS) $(CFLAGS)
 GCC.args.extra.h_o     =
 GCC.args.extra.c_o     =
